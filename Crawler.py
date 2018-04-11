@@ -48,6 +48,8 @@ class Crawler(object):
 	def __init__(self, user, latest_time):
 		self.user = user
 		self.latest_time = latest_time
+		self.reset = 0
+		self.rejected = 0
 
 	def login(self):
 		try:
@@ -359,6 +361,7 @@ def main():
 
 	crawlers = []
 	latest_time = 70  #s
+	sleep_time = 60
 	for user in users:
 		crawler = Crawler(user, latest_time)
 		crawlers.append(crawler)
@@ -370,9 +373,23 @@ def main():
 
 	while True:
 		for crawler in crawlers:
+
+			time.sleep(sleep_time/len(users))
+
+			# have a reset
+			if crawler.reset > 0:
+				crawler.reset = crawler.reset - 1
+				continue
+
+			# just record flush time
 			timestamp = time.time()
 			timestruct = time.localtime(timestamp)
+			if (int(timestruct[3]) >= 23 or int(timestruct[3] <= 5)):
+				print "it's sleep time, have a reset"
+				continue 
+
 			print time.strftime('%Y-%m-%d %H:%M:%S', timestruct)+" user %s flush" % crawler.user['phone']
+
 			try:
 				if crawler.get_latest_article():
 					if crawler.vote_article():
@@ -381,9 +398,15 @@ def main():
 				print e
 				if crawler.login():
 					print "user %s relogin success" % user['phone']
+					crawler.rejected = 0
 				else:
+					# login be rejected
 					print "user %s relogin failed" % user['phone']
-			time.sleep(30)
+					crawler.rejected = crawler.rejected+1
+					if crawler.rejected > 5:
+						crawler.reset = 30
+
+
 
 if __name__ == '__main__':
 	main()
