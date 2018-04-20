@@ -360,7 +360,7 @@ def main():
 	'''
 
 	crawlers = []
-	latest_time = 70  #s
+	latest_time = 65  #s
 	sleep_time = 60
 	for user in users:
 		crawler = Crawler(user, latest_time)
